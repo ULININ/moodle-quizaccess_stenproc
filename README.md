@@ -28,7 +28,15 @@ own storage**, which you connect in Stenproc. No video passes through Moodle.
 
 ## Installing
 
-1. Copy this folder to `mod/quiz/accessrule/stenproc` in your Moodle.
+1. Put this repository at `mod/quiz/accessrule/stenproc` in your Moodle:
+
+   ```
+   git clone https://github.com/ULININ/moodle-quizaccess_stenproc.git \
+     mod/quiz/accessrule/stenproc
+   ```
+
+   Downloading the zip and unpacking it under that name works just as well. The
+   folder has to be called `stenproc` -- Moodle finds the plugin by its path.
 2. Visit Site administration ▸ Notifications to install it.
 3. Go to Site administration ▸ Plugins ▸ Activity modules ▸ Quiz ▸ Stenproc
    proctoring and fill in:
@@ -83,3 +91,7 @@ attempt was taken and submitted, the session opened and closed in Stenproc, the
 recording was stored, and the report played it back. It has not yet run on a
 customer's site, on a phone, or with a real camera, so treat the first customer
 installation as a pilot.
+
+## Licence
+
+GPL v3 or later, the same as Moodle. See [COPYING.txt](COPYING.txt).
