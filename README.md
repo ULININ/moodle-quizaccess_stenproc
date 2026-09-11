@@ -37,6 +37,20 @@ own storage**, which you connect in Stenproc. No video passes through Moodle.
    - **Live video address**, usually the same as the API address
    - **Proctoring agent address**, where the Stenproc agent script is hosted
 
+## Two things the network must allow
+
+Both were found by installing this plugin on a real Moodle site.
+
+- **The agent script must allow cross-origin loading.** The quiz page loads it
+  from wherever you host it, so that server must send
+  `Access-Control-Allow-Origin`. Without it the browser refuses the script and
+  the check reports that the device isn't ready.
+- **Moodle blocks outgoing requests to private addresses and to ports other than
+  80 and 443.** If your Stenproc address is internal, or uses another port,
+  Moodle's cURL security settings (`curlsecurityblockedhosts` and
+  `curlsecurityallowedport`, under Site security settings) have to allow it.
+  Otherwise attempts stop with "Proctoring could not be started".
+
 ## Using it
 
 Edit any quiz, open the **Stenproc proctoring** section, turn it on and choose
@@ -64,5 +78,8 @@ recorded. The report for an attempt is at
 
 ## Status
 
-This plugin has not yet been installed on a live Moodle. Treat the first
-installation as a pilot, on a test site, before using it for a real exam.
+Installed and exercised on Moodle 4.5.13: a proctored quiz was created, an
+attempt was taken and submitted, the session opened and closed in Stenproc, the
+recording was stored, and the report played it back. It has not yet run on a
+customer's site, on a phone, or with a real camera, so treat the first customer
+installation as a pilot.

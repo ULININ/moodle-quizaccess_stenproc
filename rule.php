@@ -187,9 +187,29 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
     // ── The check before an attempt starts ──────────────────────────────────
 
     public function is_preflight_check_required($attemptid) {
-        // Shown when starting an attempt and when continuing one, so the
-        // student's camera is confirmed before they carry on.
-        return true;
+        global $SESSION;
+
+        // Asked once per quiz per session. Without this, Moodle sends the
+        // student back to the check on every page of the attempt.
+        return empty($SESSION->quizaccess_stenproc_checked[$this->quiz->id]);
+    }
+
+    /**
+     * Moodle calls this once the student has passed the check.
+     *
+     * @param int $attemptid
+     */
+    public function notify_preflight_check_passed($attemptid) {
+        global $SESSION;
+        $SESSION->quizaccess_stenproc_checked[$this->quiz->id] = true;
+    }
+
+    /**
+     * The next attempt is checked again.
+     */
+    public function current_attempt_finished() {
+        global $SESSION;
+        unset($SESSION->quizaccess_stenproc_checked[$this->quiz->id]);
     }
 
     public function add_preflight_check_form_fields($quizform, MoodleQuickForm $mform, $attemptid) {
@@ -235,10 +255,22 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
      * @param moodle_page $page
      */
     public function setup_attempt_page($page) {
-        global $USER;
+        global $DB, $USER;
 
         $attemptid = optional_param('attempt', 0, PARAM_INT);
         if (!$attemptid) {
+            return;
+        }
+
+        // Only a live attempt is proctored. Moodle also loads this rule for the
+        // summary and review pages, where the session is finished or belongs to
+        // someone else's attempt.
+        $attempt = $DB->get_record('quiz_attempts', [
+            'id' => $attemptid,
+            'quiz' => $this->quiz->id,
+            'userid' => $USER->id,
+        ]);
+        if (!$attempt || $attempt->state !== 'inprogress') {
             return;
         }
 
