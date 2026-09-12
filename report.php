@@ -66,7 +66,7 @@ if (!empty($session['status'])) {
     echo html_writer::tag('p', get_string('sessionstatus', 'quizaccess_stenproc') . ': ' . s($session['status']));
 }
 
-// ── Incidents ───────────────────────────────────────────────────────────────
+// Incidents.
 echo $OUTPUT->heading(get_string('incidents', 'quizaccess_stenproc'), 3);
 
 $incidents = isset($evidence['incidents']) ? $evidence['incidents'] : [];
@@ -92,7 +92,7 @@ if (empty($incidents)) {
     echo html_writer::table($table);
 }
 
-// ── Recordings ──────────────────────────────────────────────────────────────
+// Recordings.
 echo $OUTPUT->heading(get_string('recordings', 'quizaccess_stenproc'), 3);
 
 $recordings = isset($evidence['recordings']) ? $evidence['recordings'] : [];

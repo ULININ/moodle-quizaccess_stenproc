@@ -24,15 +24,14 @@
 
 namespace quizaccess_stenproc;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Moodle owns the attempt, so the session is closed from Moodle's own events
  * rather than from the student's browser, which may already have navigated away.
  */
 class observer {
-
     /**
+     * Closes the session when the student submits the attempt.
+     *
      * @param \core\event\base $event
      */
     public static function attempt_submitted(\core\event\base $event) {
@@ -40,6 +39,8 @@ class observer {
     }
 
     /**
+     * Closes the session when Moodle abandons the attempt.
+     *
      * @param \core\event\base $event
      */
     public static function attempt_abandoned(\core\event\base $event) {
@@ -47,6 +48,8 @@ class observer {
     }
 
     /**
+     * Closes the session and forgets the attempt when it is deleted.
+     *
      * @param \core\event\base $event
      */
     public static function attempt_deleted(\core\event\base $event) {

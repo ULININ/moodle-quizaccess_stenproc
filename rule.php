@@ -44,7 +44,6 @@ if (class_exists('\mod_quiz\local\access_rule_base')) {
  * the attempt finishes.
  */
 class quizaccess_stenproc extends quizaccess_stenproc_base_class {
-
     /** @var stdClass proctoring settings for this quiz. */
     protected $proctoring;
 
@@ -81,8 +80,14 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         ];
     }
 
-    // ── Quiz settings form ──────────────────────────────────────────────────
+    // Quiz settings form.
 
+    /**
+     * Adds the Stenproc proctoring section to the quiz settings form.
+     *
+     * @param \mod_quiz_mod_form $quizform
+     * @param MoodleQuickForm $mform
+     */
     public static function add_settings_form_fields($quizform, MoodleQuickForm $mform) {
         $mform->addElement('header', 'stenprocheader', get_string('pluginname', 'quizaccess_stenproc'));
 
@@ -106,6 +111,11 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         $mform->setDefault('stenproctabswitch', 1);
     }
 
+    /**
+     * Stores this quiz's proctoring settings, or removes them when it is off.
+     *
+     * @param \stdClass $quiz
+     */
     public static function save_settings($quiz) {
         global $DB;
 
@@ -133,11 +143,22 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         }
     }
 
+    /**
+     * Removes this quiz's proctoring settings when the quiz is deleted.
+     *
+     * @param \stdClass $quiz
+     */
     public static function delete_settings($quiz) {
         global $DB;
         $DB->delete_records('quizaccess_stenproc', ['quizid' => $quiz->id]);
     }
 
+    /**
+     * Tells Moodle how to load this rule's settings alongside the quiz.
+     *
+     * @param int $quizid
+     * @return array the fields, joins and parameters to add to the quiz query
+     */
     public static function get_settings_sql($quizid) {
         return [
             'stenproc.enabled AS stenprocenabled, '
@@ -151,12 +172,22 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         ];
     }
 
-    // ── What students see and can do ────────────────────────────────────────
+    // What students see and can do.
 
+    /**
+     * What the student is told about proctoring before they begin.
+     *
+     * @return array of strings
+     */
     public function description() {
         return [get_string('preflightintro', 'quizaccess_stenproc')];
     }
 
+    /**
+     * Blocks the attempt when it cannot be proctored at all.
+     *
+     * @return string|false the reason, or false to allow the attempt
+     */
     public function prevent_access() {
         // The agent can't run in the Moodle app, so a proctored attempt has to
         // be taken in a web browser.
@@ -184,8 +215,14 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         return $useragent !== false && strpos($useragent, 'MoodleMobile') !== false;
     }
 
-    // ── The check before an attempt starts ──────────────────────────────────
+    // The check before an attempt starts.
 
+    /**
+     * Whether the student still has to pass the device check.
+     *
+     * @param int $attemptid
+     * @return bool
+     */
     public function is_preflight_check_required($attemptid) {
         global $SESSION;
 
@@ -212,6 +249,13 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         unset($SESSION->quizaccess_stenproc_checked[$this->quiz->id]);
     }
 
+    /**
+     * Builds the device check the student sees before the attempt starts.
+     *
+     * @param \mod_quiz\form\preflight_check_form $quizform
+     * @param MoodleQuickForm $mform
+     * @param int $attemptid
+     */
     public function add_preflight_check_form_fields($quizform, MoodleQuickForm $mform, $attemptid) {
         global $PAGE;
 
@@ -235,6 +279,15 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         ]);
     }
 
+    /**
+     * Refuses the attempt until the student consents and the device passes.
+     *
+     * @param array $data
+     * @param array $files
+     * @param array $errors
+     * @param int $attemptid
+     * @return array the errors, with any of this rule's own added
+     */
     public function validate_preflight_check($data, $files, $errors, $attemptid) {
         if (empty($data['stenprocconsent'])) {
             $errors['stenprocconsent'] = get_string('cameraconsentrequired', 'quizaccess_stenproc');
@@ -245,7 +298,7 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         return $errors;
     }
 
-    // ── During the attempt ──────────────────────────────────────────────────
+    // During the attempt.
 
     /**
      * Opens or resumes the proctoring session for this attempt and loads the

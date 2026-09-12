@@ -35,12 +35,11 @@ require_once($CFG->libdir . '/filelib.php');
  * straight to Stenproc and to the organisation's own storage.
  */
 class api_client {
-
     /** @var string table linking an attempt to its proctoring session. */
-    const TABLE = 'quizaccess_stenproc_session';
+    public const TABLE = 'quizaccess_stenproc_session';
 
     /** @var int seconds to wait for the Stenproc API. */
-    const TIMEOUT = 10;
+    public const TIMEOUT = 10;
 
     /**
      * True when an administrator has entered the API address and key.

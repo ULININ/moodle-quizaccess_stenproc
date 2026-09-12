@@ -24,8 +24,6 @@
 
 namespace quizaccess_stenproc\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\approved_userlist;
@@ -40,11 +38,12 @@ use core_privacy\local\request\writer;
  * own storage, and are removed there under that organisation's retention rules.
  */
 class provider implements
-        \core_privacy\local\metadata\provider,
-        \core_privacy\local\request\core_userlist_provider,
-        \core_privacy\local\request\plugin\provider {
-
+    \core_privacy\local\metadata\provider,
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /**
+     * Describes what this plugin stores, and what it sends to Stenproc.
+     *
      * @param collection $collection
      * @return collection
      */
@@ -68,6 +67,8 @@ class provider implements
     }
 
     /**
+     * Finds the quizzes where this user has a proctored attempt.
+     *
      * @param int $userid
      * @return contextlist
      */
@@ -92,6 +93,8 @@ class provider implements
     }
 
     /**
+     * Finds the users with a proctored attempt in this quiz.
+     *
      * @param userlist $userlist
      */
     public static function get_users_in_context(userlist $userlist) {
@@ -111,6 +114,8 @@ class provider implements
     }
 
     /**
+     * Exports the link between each attempt and its proctoring session.
+     *
      * @param approved_contextlist $contextlist
      */
     public static function export_user_data(approved_contextlist $contextlist) {
@@ -156,6 +161,8 @@ class provider implements
     }
 
     /**
+     * Forgets every proctoring session recorded for this quiz.
+     *
      * @param \context $context
      */
     public static function delete_data_for_all_users_in_context(\context $context) {
@@ -169,11 +176,18 @@ class provider implements
             return;
         }
 
-        $DB->delete_records_subquery('quizaccess_stenproc_session', 'attemptid', 'id',
-            "SELECT id FROM {quiz_attempts} WHERE quiz = :quizid", ['quizid' => $cm->instance]);
+        $DB->delete_records_subquery(
+            'quizaccess_stenproc_session',
+            'attemptid',
+            'id',
+            "SELECT id FROM {quiz_attempts} WHERE quiz = :quizid",
+            ['quizid' => $cm->instance]
+        );
     }
 
     /**
+     * Forgets the proctoring sessions recorded for one user.
+     *
      * @param approved_contextlist $contextlist
      */
     public static function delete_data_for_user(approved_contextlist $contextlist) {
@@ -190,13 +204,19 @@ class provider implements
                 continue;
             }
 
-            $DB->delete_records_subquery('quizaccess_stenproc_session', 'attemptid', 'id',
+            $DB->delete_records_subquery(
+                'quizaccess_stenproc_session',
+                'attemptid',
+                'id',
                 "SELECT id FROM {quiz_attempts} WHERE quiz = :quizid AND userid = :userid",
-                ['quizid' => $cm->instance, 'userid' => $userid]);
+                ['quizid' => $cm->instance, 'userid' => $userid]
+            );
         }
     }
 
     /**
+     * Forgets the proctoring sessions recorded for these users.
+     *
      * @param approved_userlist $userlist
      */
     public static function delete_data_for_users(approved_userlist $userlist) {
@@ -216,10 +236,15 @@ class provider implements
             return;
         }
 
-        list($insql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'usr');
+        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'usr');
         $params['quizid'] = $cm->instance;
 
-        $DB->delete_records_subquery('quizaccess_stenproc_session', 'attemptid', 'id',
-            "SELECT id FROM {quiz_attempts} WHERE quiz = :quizid AND userid $insql", $params);
+        $DB->delete_records_subquery(
+            'quizaccess_stenproc_session',
+            'attemptid',
+            'id',
+            "SELECT id FROM {quiz_attempts} WHERE quiz = :quizid AND userid $insql",
+            $params
+        );
     }
 }
