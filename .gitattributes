@@ -1,0 +1,6 @@
+# Keep development-only files out of `git archive`, which is how the release
+# zip is built. Everything else ships: Moodle wants amd/src alongside
+# amd/build, and the plugins directory wants COPYING.txt and README.md.
+.gitattributes  export-ignore
+.gitignore      export-ignore
+.github/        export-ignore
