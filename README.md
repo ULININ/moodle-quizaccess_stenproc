@@ -1,5 +1,7 @@
 # Stenproc proctoring for Moodle quizzes
 
+[![Moodle plugin CI](https://github.com/ULININ/moodle-quizaccess_stenproc/actions/workflows/moodle-ci.yml/badge.svg)](https://github.com/ULININ/moodle-quizaccess_stenproc/actions/workflows/moodle-ci.yml)
+
 A Moodle quiz access rule that proctors an attempt with Stenproc. Moodle keeps
 the questions, the timing and the marks. Stenproc watches and records the
 attempt, and staff review it afterwards.
