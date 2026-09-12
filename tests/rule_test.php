@@ -44,6 +44,13 @@ final class rule_test extends \advanced_testcase {
         $this->getDataGenerator()->enrol_user($this->student->id, $this->course->id, 'student');
     }
 
+    protected function tearDown(): void {
+        // The forced user agent is global state, not database state, so
+        // resetAfterTest does not clear it.
+        \core_useragent::instance(true);
+        parent::tearDown();
+    }
+
     /**
      * Builds the quiz object, which Moodle 4.2 moved into a namespace.
      *
@@ -202,6 +209,44 @@ final class rule_test extends \advanced_testcase {
             1
         );
         $this->assertSame([], $errors);
+    }
+
+    public function test_the_moodle_app_cannot_take_a_proctored_quiz(): void {
+        set_config('apibaseurl', 'https://api.example.com', 'quizaccess_stenproc');
+        set_config('apikey', 'test-key', 'quizaccess_stenproc');
+        \quizaccess_stenproc::save_settings($this->form_data());
+        \core_useragent::instance(true, 'Mozilla/5.0 (Linux; Android 14) MoodleMobile 4.4.0');
+
+        $rule = \quizaccess_stenproc::make($this->quizobj($this->student->id), time(), false);
+
+        // The agent cannot run in the app, so the attempt is refused outright
+        // rather than going ahead unproctored.
+        $this->assertSame(get_string('appnotsupported', 'quizaccess_stenproc'), $rule->prevent_access());
+    }
+
+    public function test_the_app_is_turned_away_before_the_site_is_even_checked(): void {
+        // No API address or key. The student is told to open a browser, which
+        // they can act on, rather than that the site is not set up, which they
+        // cannot.
+        \quizaccess_stenproc::save_settings($this->form_data());
+        \core_useragent::instance(true, 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) MoodleMobile');
+
+        $rule = \quizaccess_stenproc::make($this->quizobj($this->student->id), time(), false);
+
+        $this->assertSame(get_string('appnotsupported', 'quizaccess_stenproc'), $rule->prevent_access());
+    }
+
+    public function test_a_phone_browser_may_take_a_proctored_quiz(): void {
+        set_config('apibaseurl', 'https://api.example.com', 'quizaccess_stenproc');
+        set_config('apikey', 'test-key', 'quizaccess_stenproc');
+        \quizaccess_stenproc::save_settings($this->form_data());
+        // Safari on a current iPhone. Only the app is blocked, not phones.
+        \core_useragent::instance(true, 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) '
+            . 'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Mobile/15E148 Safari/604.1');
+
+        $rule = \quizaccess_stenproc::make($this->quizobj($this->student->id), time(), false);
+
+        $this->assertFalse($rule->prevent_access());
     }
 
     public function test_the_student_is_told_the_quiz_is_proctored(): void {
