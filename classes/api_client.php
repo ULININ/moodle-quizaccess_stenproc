@@ -106,9 +106,11 @@ class api_client {
      */
     public static function get_browser_config(array $checks) {
         $config = get_config('quizaccess_stenproc');
+        $apibaseurl = rtrim(isset($config->apibaseurl) ? $config->apibaseurl : '', '/');
+
         return [
-            'apiBaseUrl' => rtrim(isset($config->apibaseurl) ? $config->apibaseurl : '', '/'),
-            'socketUrl'  => rtrim(!empty($config->socketurl) ? $config->socketurl : $config->apibaseurl, '/'),
+            'apiBaseUrl' => $apibaseurl,
+            'socketUrl'  => !empty($config->socketurl) ? rtrim($config->socketurl, '/') : $apibaseurl,
             'agentUrl'   => isset($config->agenturl) ? $config->agenturl : '',
             'checks'     => $checks,
             'strings'    => [

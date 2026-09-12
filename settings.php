@@ -44,7 +44,7 @@ if ($ADMIN->fulltree) {
         'quizaccess_stenproc/socketurl',
         get_string('socketurl', 'quizaccess_stenproc'),
         get_string('socketurl_desc', 'quizaccess_stenproc'),
-        'https://api.stenproc.com',
+        '',
         PARAM_URL
     ));
 

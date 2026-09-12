@@ -118,7 +118,7 @@ final class observer_test extends \advanced_testcase {
             'objectid'      => $attemptid,
             'relateduserid' => $this->student->id,
             'context'       => \context_module::instance($this->cm->id),
-            'other'         => ['quizid' => $this->quiz->id],
+            'other'         => ['quizid' => $this->quiz->id, 'submitterid' => $this->student->id],
         ]);
         observer::attempt_submitted($event);
 
@@ -145,7 +145,7 @@ final class observer_test extends \advanced_testcase {
             'objectid'      => $attemptid,
             'relateduserid' => $this->student->id,
             'context'       => \context_module::instance($this->cm->id),
-            'other'         => ['quizid' => $this->quiz->id],
+            'other'         => ['quizid' => $this->quiz->id, 'submitterid' => $this->student->id],
         ]);
         observer::attempt_submitted($event);
 
