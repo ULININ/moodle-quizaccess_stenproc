@@ -28,22 +28,37 @@ own storage**, which you connect in Stenproc. No video passes through Moodle.
 
 ## Installing
 
-1. Put this repository at `mod/quiz/accessrule/stenproc` in your Moodle:
+### From the release zip
 
-   ```
-   git clone https://github.com/ULININ/moodle-quizaccess_stenproc.git \
-     mod/quiz/accessrule/stenproc
-   ```
+Download the zip from the [latest release][latest] -- the one named
+`quizaccess_stenproc-<version>.zip`, **not** GitHub's "Source code" zip, which
+Moodle refuses because the folder inside it is named after the tag rather than
+the plugin. Then install it through **Site administration ▸ Plugins ▸ Install
+plugins** and follow the upgrade screen.
 
-   Downloading the zip and unpacking it under that name works just as well. The
-   folder has to be called `stenproc` -- Moodle finds the plugin by its path.
-2. Visit Site administration ▸ Notifications to install it.
-3. Go to Site administration ▸ Plugins ▸ Activity modules ▸ Quiz ▸ Stenproc
-   proctoring and fill in:
-   - **Stenproc API address**, for example `https://api.stenproc.com`
-   - **Organisation API key**, created in Stenproc under API keys
-   - **Live video address**, usually the same as the API address
-   - **Proctoring agent address**, where the Stenproc agent script is hosted
+[latest]: https://github.com/ULININ/moodle-quizaccess_stenproc/releases/latest
+
+### With git
+
+Clone it to `mod/quiz/accessrule/stenproc`, then visit **Site administration ▸
+Notifications** to install it:
+
+```
+git clone https://github.com/ULININ/moodle-quizaccess_stenproc.git \
+  mod/quiz/accessrule/stenproc
+```
+
+The folder has to be called `stenproc` -- Moodle finds the plugin by its path.
+
+### Then configure it
+
+Under **Site administration ▸ Plugins ▸ Activity modules ▸ Quiz ▸ Stenproc
+proctoring**:
+
+- **Stenproc API address**, for example `https://api.stenproc.com`
+- **Organisation API key**, created in Stenproc under API keys
+- **Live video address**, usually the same as the API address
+- **Proctoring agent address**, where the Stenproc agent script is hosted
 
 ## Two things the network must allow
 
