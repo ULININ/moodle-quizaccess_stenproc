@@ -102,6 +102,7 @@ if (empty($timeline)) {
     echo html_writer::tag('p', get_string('norecordings', 'quizaccess_stenproc'));
 } else {
     $clock = get_string('strftimetime', 'langconfig');
+    $playergroups = [];
 
     foreach ($timeline as $group) {
         echo html_writer::tag('h4', $group['type'] === 'screen'
@@ -115,6 +116,42 @@ if (empty($timeline)) {
         echo html_writer::tag('p', count($group['parts']) === 1
             ? get_string('recordingsummaryone', 'quizaccess_stenproc', $summary)
             : get_string('recordingsummary', 'quizaccess_stenproc', $summary));
+
+        $playable = [];
+        foreach ($group['parts'] as $part) {
+            if (!$part['playable']) {
+                continue;
+            }
+            $when = '';
+            if ($part['startedat'] !== null) {
+                $when = userdate($part['startedat'], $clock);
+            }
+            $playable[] = [
+                'number' => $part['number'],
+                'url' => $part['url'],
+                'when' => $when,
+                'gapbefore' => $part['gapbefore'],
+                'gapbeforetext' => \quizaccess_stenproc\recording_timeline::readable($part['gapbefore']),
+                'expiresat' => $part['expiresat'],
+            ];
+        }
+
+        // The player is an extra way to watch, not the only one: the table
+        // below still links every part on its own.
+        if (!empty($playable)) {
+            $playergroups[] = ['type' => $group['type'], 'parts' => $playable];
+            echo html_writer::start_div('mb-3', ['id' => 'stenproc-player-' . $group['type']]);
+            echo html_writer::tag('video', '', [
+                'data-stenproc' => 'video',
+                'controls' => 'controls',
+                'preload' => 'metadata',
+                'class' => 'w-100',
+                'style' => 'max-width: 640px; background: #000;',
+            ]);
+            echo html_writer::div('', 'text-muted mb-2', ['data-stenproc' => 'status']);
+            echo html_writer::div('', '', ['data-stenproc' => 'steps']);
+            echo html_writer::end_div();
+        }
 
         $table = new html_table();
         $table->head = [
@@ -172,6 +209,23 @@ if (empty($timeline)) {
         }
 
         echo html_writer::table($table);
+    }
+
+    if (!empty($playergroups)) {
+        $PAGE->requires->js_call_amd('quizaccess_stenproc/player', 'init', [[
+            'groups' => $playergroups,
+            'strings' => [
+                'part' => get_string('playerpart', 'quizaccess_stenproc', '{$a}'),
+                'gap' => get_string('playergap', 'quizaccess_stenproc', '{$a}'),
+                'playing' => get_string('playerplaying', 'quizaccess_stenproc', (object) [
+                    'number' => '{$a->number}',
+                    'total' => '{$a->total}',
+                    'when' => '{$a->when}',
+                ]),
+                'linkexpired' => get_string('playerlinkexpired', 'quizaccess_stenproc'),
+                'cannotplay' => get_string('playercannotplay', 'quizaccess_stenproc'),
+            ],
+        ]]);
     }
 }
 

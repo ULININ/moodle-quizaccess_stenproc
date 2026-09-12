@@ -145,6 +145,21 @@ final class recording_timeline_test extends \advanced_testcase {
         $this->assertSame(0, $parts[1]['gapbefore']);
     }
 
+    public function test_the_temporary_link_carries_its_expiry(): void {
+        $timeline = recording_timeline::build([
+            $this->part('2026-09-12T09:14:00Z', '2026-09-12T09:18:00Z', [
+                'urlExpiresAt' => '2026-09-12T10:14:00Z',
+            ]),
+            $this->part('2026-09-12T09:18:06Z', '2026-09-12T09:22:00Z'),
+        ]);
+        $parts = $timeline[0]['parts'];
+
+        $this->assertSame(strtotime('2026-09-12T10:14:00Z'), $parts[0]['expiresat']);
+        // No expiry given is unknown, which the player treats as still valid
+        // rather than already expired.
+        $this->assertNull($parts[1]['expiresat']);
+    }
+
     public function test_lengths_are_written_the_way_a_person_reads_a_clock(): void {
         $this->assertSame('6s', recording_timeline::readable(6));
         $this->assertSame('4m 38s', recording_timeline::readable(278));

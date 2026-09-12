@@ -74,6 +74,10 @@ class recording_timeline {
                     'gapbefore' => $gap,
                     'url' => empty($recording['url']) ? null : $recording['url'],
                     'playable' => !empty($recording['url']),
+                    // A link into the organisation's storage is temporary. The
+                    // player needs to know when one has run out, so it can say
+                    // so rather than fail silently.
+                    'expiresat' => self::stamp($recording, 'urlExpiresAt'),
                 ];
 
                 if ($endedat !== null) {
