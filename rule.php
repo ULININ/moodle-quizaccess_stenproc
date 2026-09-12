@@ -89,6 +89,8 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
      * @param MoodleQuickForm $mform
      */
     public static function add_settings_form_fields($quizform, MoodleQuickForm $mform) {
+        global $OUTPUT;
+
         $mform->addElement('header', 'stenprocheader', get_string('pluginname', 'quizaccess_stenproc'));
 
         $mform->addElement('selectyesno', 'stenprocenabled', get_string('enabled', 'quizaccess_stenproc'));
@@ -109,6 +111,20 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         }
         $mform->setDefault('stenprocwebcam', 1);
         $mform->setDefault('stenproctabswitch', 1);
+
+        // A page change ends the recording and starts another, because the
+        // browser cannot keep recording across it. Shown only when the quiz is
+        // actually split over pages, and only when proctoring is on.
+        $mform->addElement(
+            'static',
+            'stenprocpagenote',
+            '',
+            $OUTPUT->notification(get_string('pagesplitnote', 'quizaccess_stenproc'), 'info', false)
+        );
+        $mform->hideIf('stenprocpagenote', 'stenprocenabled', 'eq', 0);
+        if ($mform->elementExists('questionsperpage')) {
+            $mform->hideIf('stenprocpagenote', 'questionsperpage', 'eq', 0);
+        }
     }
 
     /**

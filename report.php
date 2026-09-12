@@ -96,25 +96,82 @@ if (empty($incidents)) {
 echo $OUTPUT->heading(get_string('recordings', 'quizaccess_stenproc'), 3);
 
 $recordings = isset($evidence['recordings']) ? $evidence['recordings'] : [];
-$playable = [];
-foreach ($recordings as $recording) {
-    if (!empty($recording['url'])) {
-        $playable[] = $recording;
-    }
-}
+$timeline = \quizaccess_stenproc\recording_timeline::build($recordings);
 
-if (empty($playable)) {
+if (empty($timeline)) {
     echo html_writer::tag('p', get_string('norecordings', 'quizaccess_stenproc'));
 } else {
-    foreach ($playable as $recording) {
-        $label = s(isset($recording['recordingType']) ? $recording['recordingType'] : '');
-        echo html_writer::tag('h4', $label);
-        // The link is a temporary address for the organisation's own storage.
-        echo html_writer::link(
-            new moodle_url($recording['url']),
-            get_string('watchrecording', 'quizaccess_stenproc'),
-            ['class' => 'btn btn-secondary', 'target' => '_blank', 'rel' => 'noreferrer noopener']
-        );
+    $clock = get_string('strftimetime', 'langconfig');
+
+    foreach ($timeline as $group) {
+        echo html_writer::tag('h4', $group['type'] === 'screen'
+            ? get_string('recordingscreen', 'quizaccess_stenproc')
+            : get_string('recordingwebcam', 'quizaccess_stenproc'));
+
+        $summary = (object) [
+            'count' => count($group['parts']),
+            'recorded' => \quizaccess_stenproc\recording_timeline::readable($group['recorded']),
+        ];
+        echo html_writer::tag('p', count($group['parts']) === 1
+            ? get_string('recordingsummaryone', 'quizaccess_stenproc', $summary)
+            : get_string('recordingsummary', 'quizaccess_stenproc', $summary));
+
+        $table = new html_table();
+        $table->head = [
+            get_string('partnumber', 'quizaccess_stenproc'),
+            get_string('time', 'quizaccess_stenproc'),
+            get_string('partlength', 'quizaccess_stenproc'),
+            '',
+        ];
+
+        foreach ($group['parts'] as $part) {
+            // Nothing is recorded while the browser loads the next page. The gap
+            // is stated rather than smoothed over: a proctor needs to know which
+            // seconds of the attempt nobody saw.
+            if ($part['gapbefore'] > 0) {
+                $gap = new html_table_row([
+                    new html_table_cell(get_string(
+                        'gapnotrecorded',
+                        'quizaccess_stenproc',
+                        \quizaccess_stenproc\recording_timeline::readable($part['gapbefore'])
+                    )),
+                ]);
+                $gap->cells[0]->colspan = 4;
+                $gap->attributes['class'] = 'text-muted';
+                $table->data[] = $gap;
+            }
+
+            $when = '';
+            if ($part['startedat'] !== null) {
+                $when = userdate($part['startedat'], $clock);
+                if ($part['endedat'] !== null) {
+                    $when .= ' - ' . userdate($part['endedat'], $clock);
+                }
+            }
+
+            // A part that never finished uploading has no link. Saying so beats
+            // leaving it out of the list, which is what used to happen.
+            $action = $part['playable']
+                ? html_writer::link(
+                    new moodle_url($part['url']),
+                    get_string('watchrecording', 'quizaccess_stenproc'),
+                    ['class' => 'btn btn-secondary btn-sm', 'target' => '_blank', 'rel' => 'noreferrer noopener']
+                )
+                : html_writer::tag(
+                    'span',
+                    get_string('partnotready', 'quizaccess_stenproc'),
+                    ['class' => 'text-muted']
+                );
+
+            $table->data[] = [
+                $part['number'],
+                s($when),
+                s(\quizaccess_stenproc\recording_timeline::readable($part['length'])),
+                $action,
+            ];
+        }
+
+        echo html_writer::table($table);
     }
 }
 
