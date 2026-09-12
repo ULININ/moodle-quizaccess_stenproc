@@ -34,9 +34,41 @@ define(['core/log'], function(Log) {
      * @return {Promise}
      */
     function loadAgent(agentUrl) {
-        if (!agentModule) {
-            agentModule = import(agentUrl);
+        if (agentModule) {
+            return agentModule;
         }
+
+        // Moodle's build rewrites a dynamic import() into a RequireJS call,
+        // and RequireJS cannot load the agent: it is an ES module, so there is
+        // no define() for RequireJS to find and the browser reports
+        // "Unexpected token 'export'". Importing from an inline module script
+        // keeps the browser's own loader, which is the one that understands it.
+        agentModule = new Promise(function(resolve, reject) {
+            var callback = 'stenprocAgentLoaded' + Date.now();
+
+            window[callback] = function(module, error) {
+                delete window[callback];
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(module);
+                }
+            };
+
+            var script = document.createElement('script');
+            script.type = 'module';
+            script.textContent =
+                'import(' + JSON.stringify(agentUrl) + ').then(function(m) {' +
+                ' window[' + JSON.stringify(callback) + '](m);' +
+                '}).catch(function(e) {' +
+                ' window[' + JSON.stringify(callback) + '](null, e);' +
+                '});';
+            script.onerror = function() {
+                reject(new Error('The proctoring agent could not be loaded'));
+            };
+            document.head.appendChild(script);
+        });
+
         return agentModule;
     }
 
