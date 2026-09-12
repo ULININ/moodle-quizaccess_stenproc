@@ -14,7 +14,8 @@ attempt, and staff review it afterwards.
 - Runs the Stenproc agent in the quiz page: camera monitoring, screen sharing on
   computers, recording, face checks, and reporting when the student leaves the
   quiz.
-- Shows staff a report for each attempt: what was reported, and the recordings.
+- Shows staff a report for each attempt: what was reported, and the recordings,
+  played straight through even when the quiz ran over several pages.
 
 Recordings upload straight from the student's browser to **your organisation's
 own storage**, which you connect in Stenproc. No video passes through Moodle.
@@ -83,18 +84,47 @@ which checks to use: camera monitoring, screen sharing, recording, face checks
 and reporting when a student leaves the quiz.
 
 Students see a check before they begin, and are asked to agree to being
-recorded. The report for an attempt is at
+recorded.
+
+## The report
+
+The report for an attempt is at
 `/mod/quiz/accessrule/stenproc/report.php?attemptid=<id>`, and needs the
 `quizaccess/stenproc:viewreport` permission.
+
+It has two halves. **Incidents** lists what was reported during the attempt,
+with the time, what happened and how serious it was.
+
+**Recordings** shows the camera, and the screen where it was shared, as a
+numbered timeline: when each part ran, how long it lasted, and how much of the
+attempt was recorded altogether. A player above the list plays the parts one
+after another, and the buttons underneath jump to any of them.
+
+Two things the report states rather than leaves you to work out:
+
+- **The seconds nobody saw.** A quiz that runs over several pages records a
+  separate part for each page, and the moments in between, while the browser
+  loads the next page, are not recorded. Each of those gaps is labelled in the
+  timeline. Anyone defending a result needs to know which moments were not
+  watched, so they are shown rather than smoothed over.
+- **A part that never finished uploading.** It has no video to play, and it is
+  listed as such instead of quietly missing from the page.
+
+Links to recordings are temporary addresses into your own storage. If one runs
+out while you are reviewing, the player says so and asks you to reload the page
+rather than showing an empty box.
 
 ## Things to know
 
 - **Phones and tablets can't share their screen.** Those attempts continue with
   the camera only, and are given longer before leaving the quiz is reported,
   because notifications hide the page.
-- **Multi-page quizzes**: the agent finishes its upload and restarts on each
-  page, so each page is a separate recording segment. A quiz with all questions
-  on one page avoids this.
+- **Multi-page quizzes** record a separate part for each page, because a browser
+  cannot keep recording across a page change. The report plays the parts in
+  order and labels the gaps between them, so this is a thing to understand
+  rather than a thing to fix. Putting every question on one page records the
+  attempt in a single piece, and the quiz settings form says so when proctoring
+  is on and the quiz is split over pages.
 - **Face checks** download extra software to the student's browser the first
   time they are used.
 - **Deleting a student's data in Moodle** removes the link to their proctoring
@@ -105,9 +135,16 @@ recorded. The report for an attempt is at
 
 Installed and exercised on Moodle 4.5.13: a proctored quiz was created, an
 attempt was taken and submitted, the session opened and closed in Stenproc, the
-recording was stored, and the report played it back. It has not yet run on a
-customer's site, on a phone, or with a real camera, so treat the first customer
-installation as a pilot.
+recording was stored, and the report played it back.
+
+That attempt was on a single page, so the timeline and the player have not yet
+been seen against a real multi-page attempt. Their behaviour is covered by
+tests -- the ordering, the gaps, parts that never finished uploading, expired
+links, and playing one part after another -- but tests are not the same as
+having watched one.
+
+It has not yet run on a customer's site, on a phone, or with a real camera, so
+treat the first customer installation as a pilot.
 
 ## Licence
 
