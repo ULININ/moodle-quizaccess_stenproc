@@ -92,13 +92,17 @@ define(['core/log'], function(Log) {
             }
             event.preventDefault();
             stopping = true;
-            agent.stop().catch(function() {
+            agent.stop().then(function() {
+                return null;
+            }).catch(function() {
+                // Whether or not the upload finished, the student still has to
+                // be able to submit.
                 return null;
             }).then(function() {
                 button.dataset.stenprocDone = '1';
                 button.click();
                 return null;
-            });
+            }).catch(Log.error);
         }, true);
 
         // A best-effort catch-all if the page goes away another way.
