@@ -60,7 +60,10 @@ proctoring**:
 
 - **Stenproc API address**, for example `https://api.stenproc.com`
 - **Organisation API key**, created in Stenproc under API keys
-- **Live video address**, usually the same as the API address
+- **Live video address** — leave this blank. It falls back to the API address,
+  which is almost always what you want. If you are upgrading a site installed
+  before 0.1.2 and this field holds `https://api.stenproc.com`, clear it: your
+  students would otherwise stream live video there rather than to your own server.
 - **Proctoring agent address**, where the Stenproc agent script is hosted
 
 ## Two things the network must allow
