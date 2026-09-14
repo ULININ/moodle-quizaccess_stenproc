@@ -52,7 +52,7 @@ if ($ADMIN->fulltree) {
         'quizaccess_stenproc/agenturl',
         get_string('agenturl', 'quizaccess_stenproc'),
         get_string('agenturl_desc', 'quizaccess_stenproc'),
-        'https://app.stenproc.com/agent/stenproc-proctoring-agent.js',
+        'https://stenproc.com/agent/stenproc-proctoring-agent.js',
         PARAM_URL
     ));
 }
