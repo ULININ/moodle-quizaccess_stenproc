@@ -25,6 +25,20 @@ define(['core/log'], function(Log) {
     var agent = null;
     var agentModule = null;
     var stopping = false;
+    var submitting = false;
+    var lockedControls = [];
+    var quizLocked = false;
+
+    // The only events that count against a candidate. Anything else the agent
+    // starts reporting later is recorded but never ends an attempt by itself.
+    var VIOLATIONS = {
+        tab_switch: true,
+        fullscreen_exit: true,
+        devtools_detected: true,
+        face_absent: true,
+        multiple_faces: true,
+        screen_share_stopped: true
+    };
 
     /**
      * Loads the agent, which is hosted by Stenproc rather than shipped with
@@ -146,6 +160,117 @@ define(['core/log'], function(Log) {
         });
     }
 
+
+    /**
+     * Stops the candidate answering until proctoring is running. Hidden fields
+     * are left alone: a disabled field is not submitted, and Moodle needs them.
+     */
+    function lockQuiz() {
+        var form = document.getElementById('responseform');
+        if (!form || quizLocked) {
+            return;
+        }
+        // Only a page with questions on it. The summary page carries nothing
+        // but "Submit all and finish", and a candidate whose camera failed
+        // must still be able to hand in the work they have already done.
+        if (!form.querySelector('.que')) {
+            return;
+        }
+        quizLocked = true;
+        Array.prototype.forEach.call(
+            form.querySelectorAll('input, select, textarea, button'),
+            function(element) {
+                if (element.disabled || element.type === 'hidden') {
+                    return;
+                }
+                element.disabled = true;
+                lockedControls.push(element);
+            }
+        );
+    }
+
+    /**
+     * Gives the quiz back once proctoring is running.
+     */
+    function unlockQuiz() {
+        quizLocked = false;
+        lockedControls.forEach(function(element) {
+            element.disabled = false;
+        });
+        lockedControls = [];
+    }
+
+    /**
+     * Navigation links are anchors, so disabling form controls does not stop
+     * them. This swallows them while the quiz is locked.
+     */
+    function blockNavigationWhileLocked() {
+        document.addEventListener('click', function(event) {
+            if (!quizLocked) {
+                return;
+            }
+            if (!event.target || !event.target.closest) {
+                return;
+            }
+            if (event.target.closest('a.mod_quiz-next-nav, a.mod_quiz-prev-nav, #mod_quiz_navblock a')) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }, true);
+    }
+
+    /**
+     * Submits the attempt the way Moodle's own timer does, after giving the
+     * agent a chance to finish its uploads.
+     *
+     * @param {String} message shown to the candidate before the page goes
+     */
+    function submitAttempt(message) {
+        if (submitting) {
+            return;
+        }
+        submitting = true;
+        banner(message, 'danger');
+        // Deliberately not locking here. A disabled field is not submitted, so
+        // locking first would throw away whatever the candidate had answered.
+
+        var finish = function() {
+            var form = document.getElementById('responseform');
+            if (!form) {
+                return;
+            }
+            var field = document.createElement('input');
+            field.type = 'hidden';
+            field.name = 'finishattempt';
+            field.value = '1';
+            form.appendChild(field);
+            // Called off the prototype: a field named "submit" would otherwise
+            // shadow the method.
+            HTMLFormElement.prototype.submit.call(form);
+        };
+
+        if (agent && !stopping) {
+            stopping = true;
+            agent.stop().then(finish).catch(finish);
+            return;
+        }
+        finish();
+    }
+
+    /**
+     * Fills a message pattern from PHP, which carries {placeholders} because
+     * only the browser knows the counts.
+     *
+     * @param {String} pattern
+     * @param {Object} values
+     * @return {String}
+     */
+    function fill(pattern, values) {
+        return Object.keys(values).reduce(function(text, key) {
+            return text.split('{' + key + '}').join(values[key]);
+        }, pattern || '');
+    }
+
     return {
         /**
          * Checks the student's device before the attempt starts, and lets the
@@ -200,26 +325,64 @@ define(['core/log'], function(Log) {
         initAttempt: function(config) {
             var strings = config.strings || {};
             var checks = config.checks || {};
+            var violationNames = strings.violations || {};
+            var maxViolations = parseInt(config.maxViolations, 10);
+            var violations = 0;
+
+            if (isNaN(maxViolations) || maxViolations < 0) {
+                maxViolations = 5;
+            }
+
+            // Proctoring is not the candidate's choice: the quiz stays locked
+            // until the agent is running. Without this the prompt could simply
+            // be ignored and the attempt taken unproctored.
+            lockQuiz();
+            blockNavigationWhileLocked();
+
+            var onViolation = function(eventType, details) {
+                if (!VIOLATIONS[eventType] || submitting) {
+                    return;
+                }
+                violations += 1;
+                var reason = violationNames[eventType] || details || eventType;
+
+                if (maxViolations > 0 && violations >= maxViolations) {
+                    submitAttempt(fill(strings.submitted, {count: violations}));
+                    return;
+                }
+
+                banner(
+                    maxViolations > 0
+                        ? fill(strings.warning, {count: violations, max: maxViolations, reason: reason})
+                        : fill(strings.warningonly, {reason: reason}),
+                    'warning'
+                );
+            };
 
             var begin = function() {
                 return loadAgent(config.agentUrl).then(function(module) {
-                    agent = module.createProctoringAgent(agentOptions(config, {}));
+                    agent = module.createProctoringAgent(agentOptions(config, {onEvent: onViolation}));
                     return agent.start();
                 }).then(function() {
                     var element = document.getElementById('stenproc-banner');
                     if (element) {
                         element.remove();
                     }
+                    unlockQuiz();
                     finishBeforeLeaving();
                     return null;
                 }).catch(function(error) {
                     Log.error(error);
+                    // The quiz stays locked: proctoring could not start, so the
+                    // attempt must not continue unwatched.
                     banner(error && error.message ? error.message : (strings.failed || 'Proctoring could not start.'), 'danger');
                 });
             };
 
             if (checks.screen) {
-                var prompt = banner(strings.startproctoring || 'Start proctoring to continue', 'warning');
+                // A browser only opens the screen picker from a real click, so
+                // this one cannot start on its own.
+                var prompt = banner(strings.required || strings.startproctoring || 'Start proctoring to continue', 'warning');
                 var button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'btn btn-primary ml-2';

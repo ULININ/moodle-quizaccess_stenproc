@@ -112,6 +112,20 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
         $mform->setDefault('stenprocwebcam', 1);
         $mform->setDefault('stenproctabswitch', 1);
 
+        // What happens when a candidate keeps breaking the rules. Zero warns
+        // every time but never submits, for a site that would rather a human
+        // decided.
+        $mform->addElement(
+            'text',
+            'stenprocmaxviolations',
+            get_string('maxviolations', 'quizaccess_stenproc'),
+            ['size' => 4]
+        );
+        $mform->setType('stenprocmaxviolations', PARAM_INT);
+        $mform->setDefault('stenprocmaxviolations', 5);
+        $mform->addHelpButton('stenprocmaxviolations', 'maxviolations', 'quizaccess_stenproc');
+        $mform->hideIf('stenprocmaxviolations', 'stenprocenabled', 'eq', 0);
+
         // A page change ends the recording and starts another, because the
         // browser cannot keep recording across it. Shown only when the quiz is
         // actually split over pages, and only when proctoring is on.
@@ -148,6 +162,7 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
             'recording'     => empty($quiz->stenprocrecording) ? 0 : 1,
             'facedetection' => empty($quiz->stenprocfacedetection) ? 0 : 1,
             'tabswitch'     => empty($quiz->stenproctabswitch) ? 0 : 1,
+            'maxviolations' => max(0, (int) ($quiz->stenprocmaxviolations ?? 5)),
         ];
 
         $existing = $DB->get_record('quizaccess_stenproc', ['quizid' => $quiz->id]);
@@ -182,7 +197,8 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
                 . 'stenproc.screenshare AS stenprocscreenshare, '
                 . 'stenproc.recording AS stenprocrecording, '
                 . 'stenproc.facedetection AS stenprocfacedetection, '
-                . 'stenproc.tabswitch AS stenproctabswitch',
+                . 'stenproc.tabswitch AS stenproctabswitch, '
+                . 'stenproc.maxviolations AS stenprocmaxviolations',
             'LEFT JOIN {quizaccess_stenproc} stenproc ON stenproc.quizid = quiz.id',
             [],
         ];
@@ -354,6 +370,10 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
             debugging('Stenproc proctoring could not start: ' . $e->getMessage(), DEBUG_DEVELOPER);
             throw new moodle_exception('sessionfailed', 'quizaccess_stenproc');
         }
+
+        // The enforcement threshold travels with the session, so the page knows
+        // when to stop the attempt.
+        $session['maxViolations'] = (int) ($this->quiz->stenprocmaxviolations ?? 5);
 
         $page->requires->js_call_amd('quizaccess_stenproc/proctoring', 'initAttempt', [$session]);
     }

@@ -118,6 +118,26 @@ class api_client {
                 'failed'          => get_string('preflightfailed', 'quizaccess_stenproc'),
                 'startproctoring' => get_string('startproctoring', 'quizaccess_stenproc'),
                 'startbutton'     => get_string('startbutton', 'quizaccess_stenproc'),
+                'required'        => get_string('proctoringrequired', 'quizaccess_stenproc'),
+                // Sent as patterns the page fills in: the counts are only
+                // known in the browser, and this keeps the wording translatable.
+                'warning'         => get_string('violationwarning', 'quizaccess_stenproc', (object) [
+                    'count'  => '{count}',
+                    'max'    => '{max}',
+                    'reason' => '{reason}',
+                ]),
+                'warningonly'     => get_string('violationwarningonly', 'quizaccess_stenproc', (object) [
+                    'reason' => '{reason}',
+                ]),
+                'submitted'       => get_string('violationsubmitted', 'quizaccess_stenproc', '{count}'),
+                'violations'      => [
+                    'tab_switch'          => get_string('violation:tab_switch', 'quizaccess_stenproc'),
+                    'fullscreen_exit'     => get_string('violation:fullscreen_exit', 'quizaccess_stenproc'),
+                    'devtools_detected'   => get_string('violation:devtools_detected', 'quizaccess_stenproc'),
+                    'face_absent'         => get_string('violation:face_absent', 'quizaccess_stenproc'),
+                    'multiple_faces'      => get_string('violation:multiple_faces', 'quizaccess_stenproc'),
+                    'screen_share_stopped' => get_string('violation:screen_share_stopped', 'quizaccess_stenproc'),
+                ],
             ],
         ];
     }
