@@ -221,12 +221,6 @@ class api_client {
     }
 
     /**
-     * The incidents and recordings for an attempt, or null when it wasn't proctored.
-     *
-     * @param int $attemptid
-     * @return array|null
-     */
-    /**
      * Every proctored attempt at one quiz, with a count of what was seen in
      * each. One call, so a list of attempts does not become a call per row.
      *
@@ -237,6 +231,12 @@ class api_client {
         return self::request('GET', '/proctoring/quizzes/' . rawurlencode($quizid) . '/attempts');
     }
 
+    /**
+     * The incidents and recordings for an attempt, or null when it wasn't proctored.
+     *
+     * @param int $attemptid
+     * @return array|null
+     */
     public static function get_evidence($attemptid) {
         global $DB;
 

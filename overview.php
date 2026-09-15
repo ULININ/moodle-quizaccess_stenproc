@@ -30,7 +30,7 @@ require_once(__DIR__ . '/../../../../config.php');
 
 $cmid = required_param('cmid', PARAM_INT);
 
-list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+[$course, $cm] = get_course_and_cm_from_cmid($cmid, 'quiz');
 $quiz = $DB->get_record('quiz', ['id' => $cm->instance], '*', MUST_EXIST);
 $context = context_module::instance($cm->id);
 
@@ -78,7 +78,7 @@ $attemptrecords = [];
 $users = [];
 if ($attemptids) {
     $attemptrecords = $DB->get_records_list('quiz_attempts', 'id', $attemptids);
-    $userids = array_unique(array_map(function($record) {
+    $userids = array_unique(array_map(function ($record) {
         return $record->userid;
     }, $attemptrecords));
     if ($userids) {
