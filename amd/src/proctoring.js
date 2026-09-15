@@ -31,14 +31,14 @@ define(['core/log'], function(Log) {
 
     // The only events that count against a candidate. Anything else the agent
     // starts reporting later is recorded but never ends an attempt by itself.
-    var VIOLATIONS = {
-        tab_switch: true,
-        fullscreen_exit: true,
-        devtools_detected: true,
-        face_absent: true,
-        multiple_faces: true,
-        screen_share_stopped: true
-    };
+    var VIOLATIONS = [
+        'tab_switch',
+        'fullscreen_exit',
+        'devtools_detected',
+        'face_absent',
+        'multiple_faces',
+        'screen_share_stopped'
+    ];
 
     /**
      * Loads the agent, which is hosted by Stenproc rather than shipped with
@@ -340,7 +340,7 @@ define(['core/log'], function(Log) {
             blockNavigationWhileLocked();
 
             var onViolation = function(eventType, details) {
-                if (!VIOLATIONS[eventType] || submitting) {
+                if (VIOLATIONS.indexOf(eventType) === -1 || submitting) {
                     return;
                 }
                 violations += 1;
