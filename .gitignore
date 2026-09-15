@@ -1,6 +1,1 @@
 .DS_Store
-
-# Built by grunt. Sourcemaps are a debugging aid and their bytes depend on the
-# exact toolchain versions resolved at build time, so they are not checked in:
-# a map built anywhere else always looks stale to Moodle CI.
-amd/build/*.min.js.map
