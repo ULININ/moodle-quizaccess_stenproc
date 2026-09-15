@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'quizaccess_stenproc';
-$plugin->version   = 2026091500;
+$plugin->version   = 2026091501;
 $plugin->requires  = 2022112800; // Moodle 4.1.
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.1.9';
+$plugin->release   = '0.1.10';

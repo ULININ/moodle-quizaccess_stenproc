@@ -212,7 +212,24 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
      * @return array of strings
      */
     public function description() {
-        return [get_string('preflightintro', 'quizaccess_stenproc')];
+        $messages = [get_string('preflightintro', 'quizaccess_stenproc')];
+
+        // Staff see one more line than candidates: the way in to every
+        // proctored attempt at this quiz. Moodle's results table cannot be
+        // extended by an access rule, so the link sits here instead, on the
+        // page staff already open.
+        $context = $this->quizobj->get_context();
+        if (has_capability('quizaccess/stenproc:viewreport', $context)) {
+            $messages[] = html_writer::link(
+                new \moodle_url(
+                    '/mod/quiz/accessrule/stenproc/overview.php',
+                    ['cmid' => $this->quizobj->get_cmid()]
+                ),
+                get_string('overviewlink', 'quizaccess_stenproc')
+            );
+        }
+
+        return $messages;
     }
 
     /**
@@ -344,6 +361,20 @@ class quizaccess_stenproc extends quizaccess_stenproc_base_class {
 
         $attemptid = optional_param('attempt', 0, PARAM_INT);
         if (!$attemptid) {
+            return;
+        }
+
+        // Moodle calls this for the review page too, where the attempt is
+        // finished and may belong to a student rather than the viewer. That is
+        // where staff look at one attempt, so it is where the report belongs.
+        if ($page->pagetype === 'mod-quiz-review') {
+            if (has_capability('quizaccess/stenproc:viewreport', $page->context)) {
+                $page->add_header_action(html_writer::link(
+                    new \moodle_url('/mod/quiz/accessrule/stenproc/report.php', ['attemptid' => $attemptid]),
+                    get_string('viewreportlink', 'quizaccess_stenproc'),
+                    ['class' => 'btn btn-secondary']
+                ));
+            }
             return;
         }
 
